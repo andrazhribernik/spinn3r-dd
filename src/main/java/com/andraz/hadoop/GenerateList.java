@@ -5,11 +5,13 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -34,7 +36,7 @@ public class GenerateList extends Configured implements Tool {
     	Path inputPath = new Path(args[0]);
         Path outputDir = new Path(args[1]);
         
-    	Job job = new Job(super.getConf(), "Spinn3r duplicates counter pass1");
+    	Job job = new Job(super.getConf(), "Generate lists of original news");
         job.setJarByClass(GenerateListMapper.class);
  
         // Setup MapReduce
@@ -53,6 +55,7 @@ public class GenerateList extends Configured implements Tool {
         // Output
         FileOutputFormat.setOutputPath(job, outputDir);
         job.setOutputFormatClass(TextOutputFormat.class);
+        MultipleOutputs.addNamedOutput(job, "Output", TextOutputFormat.class, NullWritable.class, Text.class);
  
         // Delete output if exists
         FileSystem hdfs = FileSystem.get(super.getConf());

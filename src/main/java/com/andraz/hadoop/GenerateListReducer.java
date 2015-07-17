@@ -2,34 +2,51 @@ package com.andraz.hadoop;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
  
 public class GenerateListReducer extends
-        Reducer<Text, Text, Text, Text> {
+        Reducer<Text, Text, NullWritable, Text> {
  
-    public void reduce(Text text, Iterable<Text> values, Context context)
+	private MultipleOutputs mos;
+	
+	public void setup(Context context) {
+		 mos = new MultipleOutputs(context);
+	}
+	
+    public void reduce(Text key, Iterable<Text> values, Context context)
             throws IOException, InterruptedException {
-        
+    	String outputPath = context.getConfiguration().getStrings("args")[4];
+    	String[] keySplited = key.toString().split("\\+");
+    	
+    	Log log = LogFactory.getLog(GenerateListReducer.class);
     	int sum = 0;
     	List<String> docIds = new ArrayList<String>();
     	
         for (Text value : values) {
-        	String[] valueSplited = value.toString().split("\t");
-            sum += Integer.parseInt(valueSplited[0]);
-            docIds.add(valueSplited[1]);
+            docIds.add(value.toString());
         }
-        if (docIds.size() > 1){
-	        Text output = new Text();
-	        output.set(	sum + "\t" + 
-	        			docIds.toString()
-					     .replace("[", "")
-					     .replace("]", "")
-					     .replace(", ", ","));
-	        context.write(text, output);
+        Collections.sort(docIds);
+        
+        if (Math.random() < 0.0001 && docIds.size() < 10){
+	        log.info(docIds.toString());
         }
+        Text output = new Text();
+        output.set(docIds.get(0));
+        //context.write(NullWritable.get(), output);
+        mos.write("Output", NullWritable.get(), output, outputPath + keySplited[0] + "/");
+    }
+    
+    public void cleanup(Context c) throws IOException, InterruptedException {
+    	mos.close();
     }
 }

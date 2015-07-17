@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.IntWritable;
@@ -28,58 +29,58 @@ public class GenerateListMapper extends
             throws IOException, InterruptedException {
     	Log log = LogFactory.getLog(GenerateListMapper.class);
     	
-		Spinn3rDocument d = new Spinn3rDocument(value.toString());
-		
-		String paramValue = context.getConfiguration().getStrings("args")[5];
-		String queryWord = null;
-		if (paramValue.equals("content")) {
-			queryWord = d.content;
-		}
-		else if (paramValue.equals("url")) {
-			queryWord = d.urlString;
-		}
-		else if (paramValue.equals("url-host-only")) {
-			log.info("String url: " + d.urlString);
-			try {
-				queryWord = getDomainName(d.urlString);
-			} catch (URISyntaxException e) {
-				queryWord = d.urlString;
-				log.info("url host only exception: " + queryWord);
-			} catch(Exception e) {
-				log.info("Crashed mapper");
-				queryWord = d.urlString;
-			}
-		}
-		else {
-			queryWord = d.title;
-		}
-		
-		if (queryWord != null) {
-			try {
-				word.set(getHash(queryWord));
-				value.set("1\t" + d.docId);
-				context.write(word, value);
-			} catch (NoSuchAlgorithmException e) {}
-		}
+    	Spinn3rDocument d = new Spinn3rDocument(value.toString());
+    	
+    	Text docId = new Text(d.docId);
+    	String host = getDomainName(d.urlString);
+    	  	
+    	this.write(context, "C", new String[]{d.content}, docId);
+    	this.write(context, "TC", new String[]{d.title, d.content}, docId);
+    	
+    	this.write(context, "HT", new String[]{host, d.title}, docId);
+    	this.write(context, "HC", new String[]{host, d.content}, docId);
+    	this.write(context, "HTC", new String[]{host, d.title, d.content}, docId);
+    	
+    	this.write(context, "U", new String[]{host}, docId);
+    	this.write(context, "UT", new String[]{host, d.title}, docId);
+    	this.write(context, "UC", new String[]{host, d.content}, docId);
+    	this.write(context, "UTC", new String[]{host, d.title, d.content}, docId);
     }
     
-    private static String getHash(String input) throws NoSuchAlgorithmException {
-    	MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(input.getBytes());
- 
-        byte byteData[] = md.digest();
- 
-        //convert the byte to hex format method 1
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < byteData.length; i++) {
-         sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
-        }
-        return sb.toString();
+    private void write(Context c, String type, String[] parts, Text docId) throws IOException, InterruptedException {
+    	word.set(type + "+" + getHash(StringUtils.join(parts, "")));
+    	c.write(word, docId); 
     }
     
-    private static String getDomainName(String url) throws URISyntaxException {
-	    URI uri = new URI(url);
-	    String domain = uri.getHost();
-	    return domain.startsWith("www.") ? domain.substring(4) : domain;
+    private static String getHash(String input) {
+    	MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA-256");
+			md.update(input.getBytes());
+			 
+	        byte byteData[] = md.digest();
+	 
+	        //convert the byte to hex format method 1
+	        StringBuffer sb = new StringBuffer();
+	        for (int i = 0; i < byteData.length; i++) {
+	        	sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+	        }
+	        return sb.toString();
+		} catch (Exception e) {}
+		
+		
+		return null;
+        
+    }
+    
+    private static String getDomainName(String url){
+	    URI uri;
+		try {
+			uri = new URI(url);
+			String domain = uri.getHost();
+		    return domain.startsWith("www.") ? domain.substring(4) : domain;
+		} catch (Exception e) {}
+		
+	    return url;
 	}
 }
