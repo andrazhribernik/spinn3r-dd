@@ -27,7 +27,7 @@ public class GenerateListMapper extends
  
     public void map(Object key, Text value, Context context)
             throws IOException, InterruptedException {
-    	Log log = LogFactory.getLog(GenerateListMapper.class);
+    	//Log log = LogFactory.getLog(GenerateListMapper.class);
     	
     	Spinn3rDocument d = new Spinn3rDocument(value.toString());
     	

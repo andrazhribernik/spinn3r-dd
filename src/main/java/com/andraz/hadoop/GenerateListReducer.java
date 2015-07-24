@@ -28,7 +28,7 @@ public class GenerateListReducer extends
     	String outputPath = context.getConfiguration().getStrings("args")[4];
     	String[] keySplited = key.toString().split("\\+");
     	
-    	Log log = LogFactory.getLog(GenerateListReducer.class);
+    	//Log log = LogFactory.getLog(GenerateListReducer.class);
     	int sum = 0;
     	List<String> docIds = new ArrayList<String>();
     	
@@ -37,9 +37,11 @@ public class GenerateListReducer extends
         }
         Collections.sort(docIds);
         
+        /*
         if (Math.random() < 0.0001 && docIds.size() < 10){
 	        log.info(docIds.toString());
         }
+        */
         Text output = new Text();
         output.set(docIds.get(0));
         //context.write(NullWritable.get(), output);
