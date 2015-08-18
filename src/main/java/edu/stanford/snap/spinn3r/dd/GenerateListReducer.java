@@ -1,4 +1,4 @@
-package com.andraz.hadoop;
+package edu.stanford.snap.spinn3r.dd;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,24 +28,16 @@ public class GenerateListReducer extends
     	String outputPath = context.getConfiguration().getStrings("args")[4];
     	String[] keySplited = key.toString().split("\\+");
     	
-    	//Log log = LogFactory.getLog(GenerateListReducer.class);
-    	int sum = 0;
     	List<String> docIds = new ArrayList<String>();
-    	
         for (Text value : values) {
             docIds.add(value.toString());
         }
         Collections.sort(docIds);
         
-        /*
-        if (Math.random() < 0.0001 && docIds.size() < 10){
-	        log.info(docIds.toString());
-        }
-        */
         Text output = new Text();
         output.set(docIds.get(0));
-        //context.write(NullWritable.get(), output);
-        mos.write("Output", NullWritable.get(), output, outputPath + keySplited[0] + "/");
+        
+        mos.write("Output", NullWritable.get(), output, outputPath + "/" + keySplited[0] + "/");
     }
     
     public void cleanup(Context c) throws IOException, InterruptedException {

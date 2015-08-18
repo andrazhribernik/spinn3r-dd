@@ -1,4 +1,4 @@
-package com.andraz.hadoop;
+package edu.stanford.snap.spinn3r.dd;
 
 import java.io.IOException;
 import java.net.URI;

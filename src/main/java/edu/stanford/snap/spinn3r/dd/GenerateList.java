@@ -1,4 +1,4 @@
-package com.andraz.hadoop;
+package edu.stanford.snap.spinn3r.dd;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
